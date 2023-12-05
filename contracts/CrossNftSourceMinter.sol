@@ -6,9 +6,8 @@ import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol";
 import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
-import {Withdraw} from "./utils/Withdraw.sol";
 
-contract CrossNftSourceMinter is Withdraw {
+contract CrossNftSourceMinter is OwnerIsCreator{
     enum PayFeesIn {
         Native,
         LINK
@@ -18,7 +17,7 @@ contract CrossNftSourceMinter is Withdraw {
 
     mapping(uint64 => bool) public whitelistedChains;
 
-    error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); 
+    error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees);
     error DestinationChainNotWhitelisted(uint64 destinationChainSelector);
     error NothingToWithdraw();
 
@@ -65,7 +64,7 @@ contract CrossNftSourceMinter is Withdraw {
     )
         external
         onlyWhitelistedChain(_destinationChainSelector)
-        returns (bytes32 messageId) 
+        returns (bytes32 messageId)
     {
         Client.EVMTokenAmount[]
             memory tokenAmounts = new Client.EVMTokenAmount[](1);
@@ -110,41 +109,16 @@ contract CrossNftSourceMinter is Withdraw {
         );
     }
 
-    // function mint(
-    //     uint64 destinationChainSelector,
-    //     address receiver,
-    //     PayFeesIn payFeesIn
-    // ) external {
-    //     Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
-    //         receiver: abi.encode(receiver),
-    //         data: abi.encodeWithSignature("mint(address)", msg.sender),
-    //         tokenAmounts: new Client.EVMTokenAmount[](0),
-    //         extraArgs: "",
-    //         feeToken: payFeesIn == PayFeesIn.LINK ? i_link : address(0)
-    //     });
-
-    //     uint256 fee = IRouterClient(i_router).getFee(
-    //         destinationChainSelector,
-    //         message
-    //     );
-
-    //     bytes32 messageId;
-
-    //     if (payFeesIn == PayFeesIn.LINK) {
-    //         // LinkTokenInterface(i_link).approve(i_router, fee);
-    //         messageId = IRouterClient(i_router).ccipSend(
-    //             destinationChainSelector,
-    //             message
-    //         );
-    //     } else {
-    //         messageId = IRouterClient(i_router).ccipSend{value: fee}(
-    //             destinationChainSelector,
-    //             message
-    //         );
-    //     }
-
-    //     emit MessageSent(messageId);
-    // }
+    function withdrawToken(
+        address _beneficiary,
+        address _token
+    ) public onlyOwner {
+        uint256 amount = IERC20(_token).balanceOf(address(this));
+        
+        if (amount == 0) revert NothingToWithdraw();
+        
+        IERC20(_token).transfer(_beneficiary, amount);
+    }
 
         receive() external payable {}
 }
