@@ -40,10 +40,19 @@ contract CrossNftSourceMinter is Withdraw {
     constructor(address router, address link) {
         i_router = router;
         i_link = link;
-        LinkTokenInterface(i_link).approve(i_router, type(uint256).max);
     }
 
-    receive() external payable {}
+    function whitelistChain(
+        uint64 _destinationChainSelector
+    ) external onlyOwner {
+        whitelistedChains[_destinationChainSelector] = true;
+    }
+
+    function denylistChain(
+        uint64 _destinationChainSelector
+    ) external onlyOwner {
+        whitelistedChains[_destinationChainSelector] = false;
+    }
 
     function mint(
         uint64 destinationChainSelector,
@@ -80,4 +89,6 @@ contract CrossNftSourceMinter is Withdraw {
 
         emit MessageSent(messageId);
     }
+
+        receive() external payable {}
 }
