@@ -26,12 +26,6 @@ contract CrossNftDestinationMinter is CCIPReceiver, OwnerIsCreator{
     uint256 price;
 
     event MintCallSuccessfull();
-
-    constructor(address router, uint256 _price) CCIPReceiver(router) {
-        nft = new MyNFT();
-        price = _price;
-    }
-
     mapping(uint64 => bool) public whitelistedSourceChains;
     mapping(address => bool) public whitelistedSenders;
 
@@ -51,10 +45,37 @@ contract CrossNftDestinationMinter is CCIPReceiver, OwnerIsCreator{
         _;
     }
 
+    constructor(address router, uint256 _price) CCIPReceiver(router) {
+        nft = new MyNFT();
+        price = _price;
+    }
 
+    function whitelistSourceChain(
+        uint64 _sourceChainSelector
+    ) external onlyOwner {
+        whitelistedSourceChains[_sourceChainSelector] = true;
+    }
+
+    function denylistSourceChain(
+        uint64 _sourceChainSelector
+    ) external onlyOwner {
+        whitelistedSourceChains[_sourceChainSelector] = false;
+    }
+
+    function whitelistSender(address _sender) external onlyOwner {
+        whitelistedSenders[_sender] = true;
+    }
+
+    function denySender(address _sender) external onlyOwner {
+        whitelistedSenders[_sender] = false;
+    }
     function _ccipReceive(
         Client.Any2EVMMessage memory message
-    ) internal override {
+    ) internal
+        onlyWhitelistedSourceChain(message.sourceChainSelector)
+        onlyWhitelistedSenders(abi.decode(message.sender, (address)))
+        override
+    {
         require(message.destTokenAmounts[0].amount >= price, "Not enough CCIP-BnM for mint");
         (bool success, ) = address(nft).call(message.data);
         require(success);
