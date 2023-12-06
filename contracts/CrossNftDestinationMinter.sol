@@ -6,6 +6,21 @@ import {OwnerIsCreator} from "@chainlink/contracts-ccip/src/v0.8/shared/access/O
 import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
 import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 
+contract MyNFT is ERC721URIStorage, OwnerIsCreator {
+    // string constant TOKEN_URI =
+    //     "https://ipfs.io/ipfs/QmYuKY45Aq87LeL1R5dhb1hqHLp6ZFbJaCP8jxqKM1MX6y/babe_ruth_1.json";
+    uint256 internal tokenId;
+
+    constructor() ERC721("MyNFT", "MNFT"){}
+
+    function mint(address to, string memory TOKEN_URI) public onlyOwner {
+        _safeMint(to, tokenId);
+        _setTokenURI(tokenId, TOKEN_URI);
+        unchecked {
+            tokenId++;
+        }
+    }
+}
 contract CrossNftDestinationMinter is CCIPReceiver, OwnerIsCreator{
     MyNFT public nft;
     uint256 price;
