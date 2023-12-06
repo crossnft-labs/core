@@ -32,6 +32,26 @@ contract CrossNftDestinationMinter is CCIPReceiver, OwnerIsCreator{
         price = _price;
     }
 
+    mapping(uint64 => bool) public whitelistedSourceChains;
+    mapping(address => bool) public whitelistedSenders;
+
+    event MintCallSuccessfull();
+
+    error SourceChainNotWhitelisted(uint64 sourceChainSelector);
+    error SenderNotWhitelisted(address sender);
+
+    modifier onlyWhitelistedSourceChain(uint64 _sourceChainSelector) {
+        if (!whitelistedSourceChains[_sourceChainSelector])
+            revert SourceChainNotWhitelisted(_sourceChainSelector);
+        _;
+    }
+
+    modifier onlyWhitelistedSenders(address _sender) {
+        if (!whitelistedSenders[_sender]) revert SenderNotWhitelisted(_sender);
+        _;
+    }
+
+
     function _ccipReceive(
         Client.Any2EVMMessage memory message
     ) internal override {
