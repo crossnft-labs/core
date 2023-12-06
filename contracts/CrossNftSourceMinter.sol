@@ -77,7 +77,7 @@ contract CrossNftSourceMinter is OwnerIsCreator{
         // Build the CCIP Message
         Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
             receiver: abi.encode(_receiver),
-            data: abi.encodeWithSignature("mint(address, _metadataURL)", msg.sender),
+            data: abi.encodeWithSignature("mint(address, string)", msg.sender, _metadataURL),
             tokenAmounts: tokenAmounts,
             extraArgs: Client._argsToBytes(
                 Client.EVMExtraArgsV1({gasLimit: 200_000, strict: false})
